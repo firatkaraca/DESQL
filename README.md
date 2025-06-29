@@ -69,7 +69,14 @@ This app has been fully wrapped with [Electron](https://www.electronjs.org/) so 
 
 ### 🚀 Run Locally
 
-```bash
+```bash<img width="1680" alt="desql7" src="https://github.com/user-attachments/assets/3d6c8f96-d453-4bda-8b25-f83836eeaaef" />
+<img width="1680" alt="desql6" src="https://github.com/user-attachments/assets/8afbcb89-6338-4e5e-a50a-26dbbcbaf720" />
+<img width="1680" alt="desql5" src="https://github.com/user-attachments/assets/4e9bdf09-6964-455b-bb93-5cba5cbd9631" />
+<img width="1680" alt="desql4" src="https://github.com/user-attachments/assets/37d484e3-9e58-4916-9a76-b7c8bd930662" />
+<img width="1680" alt="desql3" src="https://github.com/user-attachments/assets/1aa21b1e-d9e3-436c-8e2b-bc807890002f" />
+<img width="1680" alt="desql2" src="https://github.com/user-attachments/assets/734fda42-fa70-4ee9-a791-909a58d88278" />
+<img width="1680" alt="desql1" src="https://github.com/user-attachments/assets/1d714845-eb14-477b-a8cb-a0ca4c56fe2e" />
+
 # Install dependencies
 npm install
 
