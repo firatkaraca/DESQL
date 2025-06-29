@@ -1,9 +1,9 @@
 const dbFileInput = document.getElementById('db-file-input');
 const dbFileSelectBtn = document.getElementById('db-file-select-btn');
 const dbFileTooltipText = document.getElementById('db-file-tooltip-text');
-const dbDownloadBtn = document.getElementById('db-download-btn');
+const dbSaveBtn = document.getElementById('db-save-btn');
 const dbCloseBtn = document.getElementById('db-close-btn');
-const downloadTooltipText = document.getElementById('download-tooltip-text');
+const saveTooltipText = document.getElementById('save-tooltip-text');
 const mainContent = document.getElementById('main-content');
 const tableList = document.getElementById('table-list');
 const queryInput = document.getElementById('query-input');
@@ -89,6 +89,17 @@ async function clearDB() {
     return transaction.complete;
 }
 
+async function persistDbStateToIndexedDB() {
+    if (!db) return;
+    try {
+        const data = db.export();
+        await saveDB(currentDbDownloadFileName, data);
+    } catch (err) {
+        console.error("Failed to persist DB state to IndexedDB:", err);
+        displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Failed to save changes locally: ${err.message}`);
+    }
+}
+
 async function initializeSqlJs() {
     try {
         SQL = await initSqlJs({
@@ -126,9 +137,9 @@ function displayInitialState() {
     loadingIndicator.style.display = 'none';
     currentFileName = "Select Database File";
     dbFileTooltipText.textContent = currentFileName;
-    dbDownloadBtn.disabled = true;
+    dbSaveBtn.disabled = true;
     dbCloseBtn.style.display = 'none';
-    dbDownloadBtn.style.display = 'none';
+    dbSaveBtn.style.display = 'none';
     dbFileTooltipText.style.display = 'none';
     resultsContainer.innerHTML = '';
     updateActionButtonStates();
@@ -180,9 +191,9 @@ async function loadDbData(uint8Array, fileName, saveToIdb) {
 
     resetCurrentSelectionAndTableInfo();
     updateActionButtonStates();
-    dbDownloadBtn.disabled = true;
+    dbSaveBtn.disabled = true;
     dbCloseBtn.style.display = 'none';
-    dbDownloadBtn.style.display = 'none';
+    dbSaveBtn.style.display = 'none';
     dbFileTooltipText.style.display = 'none';
 
     try {
@@ -201,9 +212,9 @@ async function loadDbData(uint8Array, fileName, saveToIdb) {
         mainContent.style.display = 'grid';
         await fetchAndDisplayTables();
         displayMessage('success', `<i class="fas fa-check-circle"></i> Database loaded successfully: <b>${fileName}</b>`);
-        dbDownloadBtn.disabled = false;
+        dbSaveBtn.disabled = false;
         dbCloseBtn.style.display = 'block';
-        dbDownloadBtn.style.display = 'block';
+        dbSaveBtn.style.display = 'block';
         dbFileTooltipText.style.display = 'block';
     } catch (err) {
         displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Failed to read database file or invalid: ${err.message}`);
@@ -214,9 +225,9 @@ async function loadDbData(uint8Array, fileName, saveToIdb) {
     }
 }
 
-dbDownloadBtn.addEventListener('click', () => {
+dbSaveBtn.addEventListener('click', () => {
     if (!db) {
-        displayMessage('error', `<i class="fas fa-exclamation-circle"></i> No database loaded to download.`);
+        displayMessage('error', `<i class="fas fa-exclamation-circle"></i> No database loaded to save.`);
         return;
     }
     try {
@@ -230,9 +241,9 @@ dbDownloadBtn.addEventListener('click', () => {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        displayMessage('success', `<i class="fas fa-check-circle"></i> Database downloaded as <b>${currentDbDownloadFileName}</b>.`);
+        displayMessage('success', `<i class="fas fa-check-circle"></i> Database saved as <b>${currentDbDownloadFileName}</b>.`);
     } catch (err) {
-        displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Error downloading database: ${err.message}`);
+        displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Error saving database: ${err.message}`);
     }
 });
 
@@ -360,7 +371,7 @@ function updateActionButtonStates() {
     }
 }
 
-function executeQuery() {
+async function executeQuery() {
     const query = editor.getValue().trim();
     if (!query) {
         displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Please enter a query to execute.`);
@@ -383,6 +394,11 @@ function executeQuery() {
         const results = db.exec(query);
         const endTime = performance.now();
         const duration = ((endTime - startTime) / 1000).toFixed(4);
+        const isModifying = db.getRowsModified() > 0;
+
+        if (isModifying) {
+            await persistDbStateToIndexedDB();
+        }
 
         if (results.length > 0 && results[0].columns.length > 0) {
             currentTableData = { columns: results[0].columns, values: results[0].values };
@@ -407,7 +423,17 @@ function executeQuery() {
             if (currentDisplayedTableName && query.match(/^\s*(INSERT|UPDATE|DELETE)\s/i)) {
                 editor.setValue(`SELECT * FROM "${currentDisplayedTableName}" LIMIT 1000;`);
                 executeQuery();
+            } else if (isModifying) {
+                const tableNameMatch = query.match(/(?:FROM|INTO|UPDATE|TABLE)\s+"?([a-zA-Z0-9_]+)"?/i);
+                if (tableNameMatch && tableNameMatch[1]) {
+                    const tableName = tableNameMatch[1];
+                     if(allTables.includes(tableName)){
+                        editor.setValue(`SELECT * FROM "${tableName}" LIMIT 1000;`);
+                        executeQuery();
+                    }
+                }
             }
+            
             currentTableData = null;
             currentDisplayedTableName = null;
             primaryKeyColumnNames = [];
@@ -953,7 +979,7 @@ insertButton.addEventListener('click', () => {
     openModal('insert');
 });
 
-function handleInsert(event) {
+async function handleInsert(event) {
     event.preventDefault();
     const formData = new FormData(dataEntryForm);
     const columns = [];
@@ -985,6 +1011,7 @@ function handleInsert(event) {
         const query = `INSERT INTO "${currentDisplayedTableName}" DEFAULT VALUES`;
         try {
             db.run(query);
+            await persistDbStateToIndexedDB();
             displayMessage('success', `<i class="fas fa-check-circle"></i> Record added successfully with default values.`);
             closeModal();
             editor.setValue(`SELECT * FROM "${currentDisplayedTableName}" LIMIT 1000;`);
@@ -1006,6 +1033,7 @@ function handleInsert(event) {
 
     try {
         db.run(query, values);
+        await persistDbStateToIndexedDB();
         displayMessage('success', `<i class="fas fa-check-circle"></i> Record added successfully.`);
         closeModal();
         editor.setValue(`SELECT * FROM "${currentDisplayedTableName}" LIMIT 1000;`);
@@ -1017,7 +1045,7 @@ function handleInsert(event) {
     }
 }
 
-function handleUpdate(event) {
+async function handleUpdate(event) {
     event.preventDefault();
     const formData = new FormData(dataEntryForm);
     const setParts = [];
@@ -1041,7 +1069,6 @@ function handleUpdate(event) {
             pkWhereParts.push(`"${pkCol.name}" = ?`);
             pkParams.push(currentSelectedRowData[pkCol.name]);
         } else {
-            console.warn(`Primary key column "${pkCol.name}" not found in originalSelectedRowData.`);
             displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Primary key column missing. Could not update record.`);
             closeModal();
             return;
@@ -1064,6 +1091,7 @@ function handleUpdate(event) {
 
     try {
         db.run(query, params);
+        await persistDbStateToIndexedDB();
         displayMessage('success', `<i class="fas fa-check-circle"></i> Record updated successfully.`);
         closeModal();
         editor.setValue(`SELECT * FROM "${currentDisplayedTableName}" LIMIT 1000;`);
@@ -1074,7 +1102,7 @@ function handleUpdate(event) {
     }
 }
 
-function handleDelete() {
+async function handleDelete() {
     if (!currentSelectedRowData || primaryKeyColumnNames.length === 0) {
         displayMessage('error', `<i class="fas fa-exclamation-circle"></i> No record selected or primary key missing.`);
         closeModal();
@@ -1091,7 +1119,6 @@ function handleDelete() {
             pkWhereParts.push(`"${pkCol.name}" = ?`);
             pkParams.push(currentSelectedRowData[pkCol.name]);
         } else {
-            console.warn(`Primary key column "${pkCol.name}" not found in currentSelectedRowData.`);
             displayMessage('error', `<i class="fas fa-exclamation-circle"></i> Primary key column missing. Could not delete record.`);
             closeModal();
             return;
@@ -1108,6 +1135,7 @@ function handleDelete() {
 
     try {
         db.run(query, pkParams);
+        await persistDbStateToIndexedDB();
         displayMessage('success', `<i class="fas fa-check-circle"></i> Record deleted successfully.`);
         closeModal();
         editor.setValue(`SELECT * FROM "${currentDisplayedTableName}" LIMIT 1000;`);
