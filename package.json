@@ -1,0 +1,16 @@
+{
+  "name": "your-electron-app",
+  "version": "1.0.0",
+  "description": "A desktop app using Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^X.Y.Z"
+  }
+}

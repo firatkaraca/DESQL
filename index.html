@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DESQL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div id="splash-screen">DESQL</div>
+
+        <div class="top-controls">
+            <span class="tooltip-text" id="db-file-tooltip-text">Select Database File</span>
+            
+            <button id="db-file-select-btn" class="control-button">
+                <i class="fas fa-database"></i>
+                <input type="file" id="db-file-input" accept=".sqlite,.db,.sqlite3" autocomplete="off"
+                    style="display: none;">
+                <span class="tooltip-text">Select Database File</span>
+            </button>
+
+            <button id="db-download-btn" class="control-button" disabled>
+                <i class="fas fa-download"></i>
+                <span class="tooltip-text" id="download-tooltip-text">Download Database</span>
+            </button>
+
+            <button id="db-close-btn" class="control-button" style="display: none;">
+                <i class="fas fa-times-circle"></i>
+                <span class="tooltip-text">Close Database</span>
+            </button>
+            
+            <button id="theme-toggle-btn" class="control-button">
+                <span class="tooltip-text" id="theme-tooltip-text">Light Theme</span>
+            </button>
+            
+        </div>
+
+        <div id="loading-indicator">Loading...</div>
+
+        <div id="main-content">
+            <div id="sidebar">
+                <div class="sidebar-header">
+                    <input type="text" id="table-search-input" autocomplete="off" placeholder="Search table...">
+                </div>
+
+                <ul id="table-list"></ul>
+            </div>
+            <div id="query-runner">
+                <button id="query-accordion-toggle-btn" class="query-accordion-control">
+                    <i class="fas fa-terminal"></i>
+                    <span class="tooltip-text">SQL Query Executor</span>
+                </button>
+
+                <div class="query-box-content" id="query-box-content">
+                    <div class="query-box">
+                        <textarea id="query-input" autocomplete="off"
+                            placeholder="SELECT * FROM table_name;"></textarea>
+                        <div class="query-bottom">
+                            <div class="query-hint">Press Shift+Enter to execute query (Enter for new line)</div>
+
+                            <div class="query-actions query-actions-float">
+                                <button id="execute-button" class="float-btn execute">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button id="show-columns-button" class="float-btn columns">
+                                    <i class="fas fa-list-alt"></i>
+                                </button>
+                                <button id="clear-button" class="float-btn clear">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="insert-button" disabled>
+                        <i class="fas fa-plus-circle"></i> Add New Record
+                    </button>
+                    <input type="text" id="record-search-input" autocomplete="off" placeholder="Search records...">
+                </div>
+
+                <div id="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dataEntryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <span class="modal-close-button">&times;</span>
+            </div>
+            <form id="dataEntryForm" class="modal-form">
+                <div id="formFields">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="submit-btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
