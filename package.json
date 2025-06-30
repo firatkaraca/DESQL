@@ -1,16 +1,39 @@
 {
-  "name": "your-electron-app",
+  "name": "desql",
+  "productName": "DESQL",
   "version": "1.0.0",
-  "description": "A desktop app using Electron",
+  "description": "Desktop Debug SQL",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "build": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Fırat Karaca",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^X.Y.Z"
+    "electron": "^37.1.0",
+    "electron-builder": "^26.0.12"
+  },
+  "files": [
+    "dist/**/*",
+    "main.js",
+    "!**/node_modules/*/{test,__tests__}/**"
+  ],
+  "build": {
+    "appId": "com.firatkaraca.desql",
+    "productName": "DESQL",
+    "files": [
+      "**/*"
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "buildResources/icon.icns"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "buildResources/icon.ico"
+    }
   }
 }
